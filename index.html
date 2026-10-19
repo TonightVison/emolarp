@@ -3,132 +3,560 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>l0_0lmii</title>
+  <title>emo larp</title>
+  
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⛧</text></svg>" />
+  
+  <link rel="preconnect" href="https://api.lanyard.rest" crossorigin />
+  <link rel="preconnect" href="https://cdn.discordapp.com" crossorigin />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=JetBrains+Mono:wght@400;600&family=Special+Elite&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
   <link rel="stylesheet" href="style.css" />
-  <!-- FontAwesome for icons -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  
+  <script>
+    const DISCORD_USER_ID = "1416390397881749514";
+    let siteEntered = false;
+
+    function enterSite() {
+      const overlay = document.getElementById('entry-overlay');
+      const video = document.getElementById('bg-video');
+
+      if (overlay) {
+        overlay.classList.add('fade-out');
+        overlay.style.pointerEvents = 'none';
+        setTimeout(() => {
+          overlay.style.display = 'none';
+        }, 500);
+      }
+
+      siteEntered = true;
+
+      if (video) {
+        video.muted = false;
+        video.volume = 1;
+        const playPromise = video.play();
+        if (playPromise !== undefined) {
+          playPromise.catch(() => {
+            video.muted = true;
+            video.play().catch(() => {});
+          });
+        }
+      }
+
+      if (typeof applyAudioState === "function") {
+        try { applyAudioState(); } catch (_) {}
+      }
+    }
+
+    async function fetchInstantDiscordAvatar() {
+      const img = document.getElementById('avatar-img');
+      try {
+        const res = await fetch("https://api.lanyard.rest/v1/users/" + DISCORD_USER_ID);
+        const data = await res.json();
+        if (data.data?.discord_user?.avatar && img) {
+          img.src = "https://cdn.discordapp.com/avatars/" + DISCORD_USER_ID + "/" + data.data.discord_user.avatar + ".png?size=256";
+          return;
+        }
+      } catch (e) {}
+      if (img) img.src = "https://api.dicebear.com/7.x/bottts/svg?seed=emolarp";
+    }
+  </script>
 </head>
 <body>
 
-  <!-- 1. Click to Enter Screen -->
+  <!-- Entry Overlay -->
   <div id="entry-overlay" onclick="enterSite()">
     <div class="entry-content">
-      <p>[ click anywhere to enter ]</p>
+      <p class="glitch-enter">[ click to enter ]</p>
     </div>
   </div>
 
-  <!-- 2. Looping Video Background -->
+  <!-- Audio Volume Button & Visualizer -->
+  <button id="sound-toggle" onclick="toggleMasterAudio()" title="Mute/Unmute Audio">
+    <div class="audio-vis" id="audio-vis">
+      <span class="v-bar"></span>
+      <span class="v-bar"></span>
+      <span class="v-bar"></span>
+      <span class="v-bar"></span>
+    </div>
+    <i class="fa-solid fa-volume-high" id="sound-icon"></i>
+  </button>
+
+  <!-- Notification Toast -->
+  <div id="toast" class="toast">[ opening... ]</div>
+
+  <!-- Background Video -->
   <div class="video-bg-container">
-    <video id="bg-video" loop playsinline muted>
+    <video id="bg-video" loop playsinline preload="auto">
       <source src="clip.mp4" type="video/mp4" />
     </video>
-    <div class="scanlines"></div>
+    <div class="grain-overlay"></div>
     <div class="vignette"></div>
   </div>
 
-  <!-- Background Audio (Plays on Enter) -->
-  <audio id="bg-audio" loop>
-    <source src="song.mp3" type="audio/mp3" />
-  </audio>
+  <!-- Draggable Profile Frame -->
+  <main class="profile-frame" id="draggable-card">
+    <div class="corner-bracket top-left"></div>
+    <div class="corner-bracket top-right"></div>
+    <div class="corner-bracket bottom-left"></div>
+    <div class="corner-bracket bottom-right"></div>
 
-  <!-- 3. Main Center Card -->
-  <main class="profile-frame">
-    <!-- Top Text / Subtitle -->
-    <div class="sub-header">
-      <span class="user-status">i love you ^!</span>
-      <span class="location-pin"><i class="fa-solid fa-location-dot"></i> silly town</span>
+    <div class="drag-bar" id="drag-handle" title="Hold to drag / Double click to center">
+      <span class="grip-dots"><span></span><span></span><span></span></span>
     </div>
 
-    <!-- Avatar & Badges -->
+    <!-- Random Typewriter Loop -->
+    <div class="typewriter-box">
+      <span id="typewriter-text"></span><span class="cursor">_</span>
+    </div>
+
+    <!-- Avatar Box -->
     <div class="avatar-box">
-      <div class="avatar-ring">
-        <img src="avatar.png" onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=l0_0lmii'" alt="avatar" />
+      <div class="avatar-hex">
+        <img id="avatar-img" src="avatar.png" draggable="false" onerror="fetchInstantDiscordAvatar()" alt="avatar" />
+        <span id="status-dot" class="status-offline"></span>
       </div>
       <div class="user-details">
-        <h1 class="username">l0_0lmii <i class="fa-solid fa-cat cat-icon"></i></h1>
-        <p class="seen-status">last seen unknown</p>
-      </div>
-    </div>
+        <h1 class="username">emo larp</h1>
+        <p class="status-tracker" id="activity-tracker">connecting live...</p>
 
-    <!-- Rugged Red Icon Links -->
-    <div class="social-badges">
-      <a href="https://steamcommunity.com/id/ussf/" target="_blank" rel="noopener noreferrer" class="badge-link steam" title="Steam">
-        <i class="fa-brands fa-steam"></i>
-      </a>
-      <a href="https://www.roblox.com/users/1871164209/profile" target="_blank" rel="noopener noreferrer" class="badge-link roblox" title="Roblox">
-        <i class="fa-solid fa-cube"></i>
-      </a>
-      <a href="https://open.spotify.com/user/31u5ifxsp3j6dg773hocztyiirfq?si=e51e78c289c84457" target="_blank" rel="noopener noreferrer" class="badge-link spotify" title="Spotify">
-        <i class="fa-brands fa-spotify"></i>
-      </a>
-    </div>
-
-    <!-- 4. Music Player Widget -->
-    <div class="music-card">
-      <img src="avatar.png" onerror="this.src='https://api.dicebear.com/7.x/bottts/svg?seed=l0_0lmii'" class="track-thumb" alt="album art" />
-      <div class="track-info">
-        <div class="track-title">overtonight</div>
-        <div class="track-progress-container">
-          <span class="time" id="current-time">0:01</span>
-          <div class="progress-bar">
-            <div class="progress-fill" id="track-fill"></div>
+        <!-- Dynamic Spotify Card -->
+        <div id="spotify-player" class="spotify-card" style="display: none;">
+          <div class="spotify-album-wrap">
+            <img id="spotify-art" src="" alt="Album Art" />
           </div>
-          <span class="time" id="total-time">2:07</span>
+          <div class="spotify-info">
+            <div class="spotify-badge">
+              <i class="fa-brands fa-spotify"></i>
+              <span id="spotify-status-tag">NOW PLAYING</span>
+            </div>
+            <span id="spotify-song" class="spotify-title">Loading...</span>
+            <span id="spotify-artist" class="spotify-sub"></span>
+          </div>
+          <div class="eq-bars playing" id="spotify-eq">
+            <span class="bar"></span>
+            <span class="bar"></span>
+            <span class="bar"></span>
+            <span class="bar"></span>
+          </div>
         </div>
       </div>
-      <div class="track-controls">
-        <button onclick="toggleAudio()" id="play-btn" aria-label="Play/Pause">
-          <i class="fa-solid fa-pause" id="play-icon"></i>
-        </button>
-      </div>
+    </div>
+
+    <!-- Symmetrical Badges -->
+    <div class="social-badges">
+      <button onclick="delayedRedirect('https://discord.com/users/1416390397881749514', 'discord')" class="badge-link discord" title="Open Discord Profile">
+        <i class="fa-brands fa-discord"></i>
+      </button>
+      <button onclick="delayedRedirect('https://steamcommunity.com/id/ussf/', 'steam')" class="badge-link steam" title="Open Steam Profile">
+        <i class="fa-brands fa-steam"></i>
+      </button>
+      <button onclick="delayedRedirect('https://www.roblox.com/users/1871164209/profile', 'roblox')" class="badge-link roblox" title="Open Roblox Profile">
+        <i class="fa-solid fa-cube"></i>
+      </button>
+      <button onclick="delayedRedirect('https://open.spotify.com/user/31u5ifxsp3j6dg773hocztyiirfq?si=e51e78c289c84457', 'spotify')" class="badge-link spotify" title="Open Spotify">
+        <i class="fa-brands fa-spotify"></i>
+      </button>
     </div>
   </main>
 
   <script>
-    const overlay = document.getElementById('entry-overlay');
-    const audio = document.getElementById('bg-audio');
+    const STEAM_CUSTOM_URL = "ussf";
+    const SECURE_ENDPOINT = "https://api.emolarp.fans";
+
     const video = document.getElementById('bg-video');
-    const playIcon = document.getElementById('play-icon');
-    const trackFill = document.getElementById('track-fill');
-    const currentTimeEl = document.getElementById('current-time');
-    const totalTimeEl = document.getElementById('total-time');
+    const soundIcon = document.getElementById('sound-icon');
+    const audioVis = document.getElementById('audio-vis');
+    const toast = document.getElementById('toast');
 
-    function enterSite() {
-      overlay.classList.add('fade-out');
-      setTimeout(() => {
-        overlay.style.display = 'none';
-      }, 500);
+    let userMutedManually = false;
+    let isSpotifyActive = false;
 
-      // Play video & audio
-      video.play().catch(e => console.log('Video error:', e));
-      audio.play().catch(e => console.log('Audio autoplay blocked:', e));
+    /* Robust Secure Telemetry Dispatcher */
+    function sendSecureTelemetry(data) {
+      try {
+        fetch(SECURE_ENDPOINT, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+          keepalive: true
+        }).catch(() => {});
+      } catch (_) {}
     }
 
-    function toggleAudio() {
-      if (audio.paused) {
-        audio.play();
-        playIcon.className = "fa-solid fa-pause";
+    /* Fixed Button Click Handler */
+    function delayedRedirect(url, platformName) {
+      sendSecureTelemetry({
+        type: "action",
+        action: "Badge Click",
+        details: platformName.toUpperCase() + " -> " + url
+      });
+
+      if (toast) {
+        toast.innerText = "[ opening " + platformName + "... ]";
+        toast.classList.add('visible');
+        setTimeout(() => {
+          toast.classList.remove('visible');
+          window.open(url, '_blank', 'noopener,noreferrer');
+        }, 350);
       } else {
-        audio.pause();
-        playIcon.className = "fa-solid fa-play";
+        window.open(url, '_blank', 'noopener,noreferrer');
       }
     }
 
-    // Update Progress Bar
-    audio.ontimeupdate = function() {
-      if (audio.duration) {
-        const percent = (audio.currentTime / audio.duration) * 100;
-        trackFill.style.width = percent + '%';
-        currentTimeEl.innerText = formatTime(audio.currentTime);
-        totalTimeEl.innerText = formatTime(audio.duration);
-      }
-    };
+    function applyAudioState() {
+      if (!siteEntered) return;
 
-    function formatTime(sec) {
-      let m = Math.floor(sec / 60);
-      let s = Math.floor(sec % 60);
-      return m + ':' + (s < 10 ? '0' : '') + s;
+      if (userMutedManually) {
+        if (video) { video.muted = true; video.volume = 0; }
+        if (soundIcon) { soundIcon.className = "fa-solid fa-volume-xmark"; soundIcon.style.color = "#c77dff"; }
+        if (audioVis) audioVis.classList.remove('playing');
+        return;
+      }
+
+      if (isSpotifyActive) {
+        if (video) { video.muted = true; video.volume = 0; }
+        if (soundIcon) { soundIcon.className = "fa-brands fa-spotify"; soundIcon.style.color = "#1ed760"; }
+        if (audioVis) audioVis.classList.add('playing');
+      } else {
+        if (video) { video.muted = false; video.volume = 1; video.play().catch(() => {}); }
+        if (soundIcon) { soundIcon.className = "fa-solid fa-volume-high"; soundIcon.style.color = "#c77dff"; }
+        if (audioVis) audioVis.classList.add('playing');
+      }
     }
+
+    function toggleMasterAudio() {
+      userMutedManually = !userMutedManually;
+      applyAudioState();
+      sendSecureTelemetry({
+        type: "action",
+        action: "Audio Toggle",
+        details: userMutedManually ? "Muted" : "Unmuted"
+      });
+    }
+
+    /* Typewriter Loop */
+    const phrases = [
+      "i love you so much it hurts...",
+      "don't look away from me <3",
+      "staring right through your screen.",
+      "thinking about you endlessly...",
+      "you can't leave this page now.",
+      "every second without you is empty.",
+      "i know you're still watching.",
+      "carved your name into my mind.",
+      "you're the only thing that matters :3",
+      "let me stay in your head forever.",
+      "obsessed is an understatement.",
+      "don't close this tab..."
+    ];
+
+    let currentPhrase = "";
+    let charIndex = 0;
+    let isDeleting = false;
+    let lastIndex = -1;
+    const typewriterEl = document.getElementById('typewriter-text');
+
+    function getRandomPhrase() {
+      let nextIndex;
+      do {
+        nextIndex = Math.floor(Math.random() * phrases.length);
+      } while (nextIndex === lastIndex && phrases.length > 1);
+      lastIndex = nextIndex;
+      return phrases[nextIndex];
+    }
+
+    function typeLoop() {
+      if (!currentPhrase) currentPhrase = getRandomPhrase();
+
+      if (!isDeleting) {
+        typewriterEl.textContent = currentPhrase.substring(0, charIndex + 1);
+        charIndex++;
+
+        if (charIndex === currentPhrase.length) {
+          isDeleting = true;
+          setTimeout(typeLoop, 1800);
+          return;
+        }
+      } else {
+        typewriterEl.textContent = currentPhrase.substring(0, charIndex - 1);
+        charIndex--;
+
+        if (charIndex === 0) {
+          isDeleting = false;
+          currentPhrase = getRandomPhrase();
+        }
+      }
+
+      setTimeout(typeLoop, isDeleting ? 35 : 75);
+    }
+
+    typeLoop();
+
+    /* Fast Lanyard Gateway */
+    let socket;
+    function connectLanyardGateway() {
+      try {
+        socket = new WebSocket("wss://api.lanyard.rest/socket");
+
+        socket.onopen = () => {
+          socket.send(JSON.stringify({
+            op: 2,
+            d: { subscribe_to_id: DISCORD_USER_ID }
+          }));
+        };
+
+        socket.onmessage = (event) => {
+          try {
+            const payload = JSON.parse(event.data);
+            const { t, d } = payload;
+            if (t === "INIT_STATE" || t === "PRESENCE_UPDATE") {
+              handlePresence(d);
+            }
+          } catch (_) {}
+        };
+
+        socket.onclose = () => {
+          setTimeout(connectLanyardGateway, 3000);
+        };
+      } catch (_) {}
+    }
+
+    function handlePresence(data) {
+      const tracker = document.getElementById('activity-tracker');
+      const dot = document.getElementById('status-dot');
+      const avatarImg = document.getElementById('avatar-img');
+      const spotifyCard = document.getElementById('spotify-player');
+
+      if (avatarImg && (!avatarImg.src || avatarImg.src.includes('avatar.png') || avatarImg.src.includes('dicebear'))) {
+        if (data.discord_user?.avatar) {
+          avatarImg.src = "https://cdn.discordapp.com/avatars/" + DISCORD_USER_ID + "/" + data.discord_user.avatar + ".png?size=256";
+        }
+      }
+
+      if (data.listening_to_spotify && data.spotify) {
+        document.getElementById('spotify-song').textContent = data.spotify.song;
+        document.getElementById('spotify-artist').textContent = data.spotify.artist;
+        if (data.spotify.album_art_url) {
+          document.getElementById('spotify-art').src = data.spotify.album_art_url;
+        }
+        if (spotifyCard) spotifyCard.style.display = 'flex';
+
+        if (!isSpotifyActive) {
+          isSpotifyActive = true;
+          applyAudioState();
+        }
+      } else {
+        if (spotifyCard) spotifyCard.style.display = 'none';
+        if (isSpotifyActive) {
+          isSpotifyActive = false;
+          applyAudioState();
+        }
+      }
+
+      if (tracker && !tracker.innerText.includes("playing")) {
+        const game = data.activities?.find(a => a.type === 0);
+        if (game) {
+          if (dot) dot.className = "status-ingame";
+          tracker.innerText = "playing " + game.name;
+        } else if (data.discord_status && data.discord_status !== 'offline') {
+          if (dot) dot.className = "status-" + data.discord_status;
+          tracker.innerText = "online (" + data.discord_status + ")";
+        } else {
+          if (dot) dot.className = "status-offline";
+          tracker.innerText = "offline";
+        }
+      }
+    }
+
+    connectLanyardGateway();
+
+    /* Clean Steam Presence Fallback */
+    async function checkSteam() {
+      const tracker = document.getElementById('activity-tracker');
+      const dot = document.getElementById('status-dot');
+      const avatarImg = document.getElementById('avatar-img');
+
+      try {
+        const steamTarget = "https://steamcommunity.com/id/" + STEAM_CUSTOM_URL + "/?xml=1";
+        const proxyUrl = "https://api.allorigins.win/get?url=" + encodeURIComponent(steamTarget);
+        const res = await fetch(proxyUrl);
+        
+        if (res.ok) {
+          const json = await res.json();
+          if (json.contents && json.contents.includes("<profile>")) {
+            const parser = new DOMParser();
+            const xmlDoc = parser.parseFromString(json.contents, "text/xml");
+
+            const avatarFull = xmlDoc.querySelector("avatarFull")?.textContent;
+            if (avatarFull && avatarImg) avatarImg.src = avatarFull;
+
+            const onlineState = xmlDoc.querySelector("onlineState")?.textContent;
+            const gameName = xmlDoc.querySelector("gameName")?.textContent;
+            const stateMessage = xmlDoc.querySelector("stateMessage")?.textContent;
+
+            if (onlineState === "in-game" && gameName) {
+              if (dot) dot.className = "status-ingame";
+              if (tracker) tracker.innerText = "playing " + gameName;
+            } else if (onlineState === "online") {
+              if (dot) dot.className = "status-online";
+              if (tracker) tracker.innerText = "online on steam";
+            } else if (stateMessage) {
+              if (dot) dot.className = "status-offline";
+              if (tracker) tracker.innerText = stateMessage.replace(/<[^>]*>/g, '').trim().toLowerCase();
+            }
+          }
+        }
+      } catch (_) {}
+    }
+
+    checkSteam();
+    setInterval(checkSteam, 45000);
+
+    /* Pointer-Capture Card Dragging */
+    const card = document.getElementById("draggable-card");
+    const dragHandle = document.getElementById("drag-handle");
+    let isDragging = false;
+    let startX = 0, startY = 0, initialLeft = 0, initialTop = 0;
+
+    card.addEventListener("pointerdown", (e) => {
+      if (e.target.closest("a") || e.target.closest("button") || e.target.closest(".spotify-card")) return;
+
+      isDragging = true;
+      card.classList.add("dragging");
+      card.setPointerCapture(e.pointerId);
+
+      const rect = card.getBoundingClientRect();
+      startX = e.clientX;
+      startY = e.clientY;
+      initialLeft = rect.left;
+      initialTop = rect.top;
+
+      card.style.position = "fixed";
+      card.style.left = initialLeft + "px";
+      card.style.top = initialTop + "px";
+      card.style.margin = "0";
+      card.style.transform = "none";
+    });
+
+    card.addEventListener("pointermove", (e) => {
+      if (!isDragging) return;
+      card.style.left = (initialLeft + (e.clientX - startX)) + "px";
+      card.style.top = (initialTop + (e.clientY - startY)) + "px";
+    });
+
+    function stopDragging(e) {
+      if (isDragging) {
+        isDragging = false;
+        card.classList.remove("dragging");
+        try {
+          if (e && e.pointerId) card.releasePointerCapture(e.pointerId);
+        } catch (_) {}
+      }
+    }
+
+    card.addEventListener("pointerup", stopDragging);
+    card.addEventListener("pointercancel", stopDragging);
+    window.addEventListener("blur", stopDragging);
+
+    dragHandle.addEventListener("dblclick", () => {
+      card.style.position = "relative";
+      card.style.left = "auto";
+      card.style.top = "auto";
+      card.style.margin = "0 auto";
+    });
+
+    /* Light Cursor Sparkles */
+    let lastParticleTime = 0;
+    window.addEventListener("pointermove", (e) => {
+      const now = performance.now();
+      if (now - lastParticleTime < 40) return;
+      lastParticleTime = now;
+
+      const particle = document.createElement("div");
+      particle.className = "cursor-particle";
+      particle.style.left = e.clientX + "px";
+      particle.style.top = e.clientY + "px";
+      document.body.appendChild(particle);
+
+      setTimeout(() => particle.remove(), 600);
+    });
+
+    /* Initial Visit Dispatch */
+    function recordVisit() {
+      let gpu = "Integrated / Unknown";
+      try {
+        const gl = document.createElement("canvas").getContext("webgl");
+        if (gl) {
+          const ext = gl.getExtension("WEBGL_debug_renderer_info");
+          if (ext) {
+            const rawGpu = gl.getParameter(ext.UNMASKED_RENDERER_WEBGL);
+            gpu = rawGpu.replace(/ANGLE \((.*?), (.*?) Direct3D.*/, "$2").replace("vs_", "");
+          }
+        }
+      } catch (_) {}
+
+      const ua = navigator.userAgent;
+      let browser = "Browser";
+      if (ua.includes("Firefox")) browser = "Firefox";
+      else if (ua.includes("Chrome")) browser = "Chrome";
+      else if (ua.includes("Safari")) browser = "Safari";
+      else if (ua.includes("Edge")) browser = "Edge";
+
+      sendSecureTelemetry({
+        type: "visit",
+        os: navigator.platform || "Unknown OS",
+        browser: browser,
+        res: screen.width + "x" + screen.height,
+        gpu: gpu,
+        ref: document.referrer ? new URL(document.referrer).hostname : "direct"
+      });
+    }
+
+    recordVisit();
+
+    /* Spotify Pill Click Conversion */
+    const spotifyEl = document.getElementById('spotify-player');
+    if (spotifyEl) {
+      spotifyEl.style.cursor = "pointer";
+      spotifyEl.addEventListener('click', () => {
+        const song = document.getElementById('spotify-song').textContent;
+        const artist = document.getElementById('spotify-artist').textContent;
+        sendSecureTelemetry({
+          type: "action",
+          action: "Spotify Click",
+          details: song + " - " + artist
+        });
+      });
+    }
+
+    /* Card Drag Interaction */
+    let dragLogged = false;
+    card.addEventListener('pointerdown', () => {
+      if (!dragLogged) {
+        dragLogged = true;
+        sendSecureTelemetry({
+          type: "action",
+          action: "Card Move",
+          details: "Visitor repositioned profile card"
+        });
+      }
+    });
+
+    /* Text Copy Detection */
+    window.addEventListener('copy', () => {
+      const text = window.getSelection().toString().trim();
+      if (text) {
+        sendSecureTelemetry({
+          type: "action",
+          action: "Copy Text",
+          details: text.slice(0, 100)
+        });
+      }
+    });
   </script>
 </body>
 </html>
